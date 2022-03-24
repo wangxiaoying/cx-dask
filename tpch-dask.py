@@ -33,24 +33,31 @@ if __name__ == "__main__":
     cluster = LocalCluster(n_workers=npartition, scheduler_port=0, memory_limit="230G")
     client = Client(cluster)
 
-
     with Timer() as timer:
-        df = dd.read_sql(
-            table,
-            conn,
-            index_col,
-            npartitions=npartition,
-            limits=(0, 60000000),
-            parse_dates=[
-                "l_shipdate",
-                "l_commitdate",
-                "l_receiptdate",
-                "L_SHIPDATE",
-                "L_COMMITDATE",
-                "L_RECEIPTDATE",
-            ],
-            enable_cx=enable_cx,
-        ).compute()
+        if enable_cx:
+            df = dd.read_sql_cx(
+                f"select * from {table}",
+                conn,
+                index_col,
+                npartitions=npartition,
+                limits=None,
+            ).compute()
+        else:
+            df = dd.read_sql(
+                table,
+                conn,
+                index_col,
+                npartitions=npartition,
+                limits=None,
+                parse_dates=[
+                    "l_shipdate",
+                    "l_commitdate",
+                    "l_receiptdate",
+                    "L_SHIPDATE",
+                    "L_COMMITDATE",
+                    "L_RECEIPTDATE",
+                ],
+            ).compute()
 
     print(f"[Total] {timer.elapsed:.2f}s")
 
